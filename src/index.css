@@ -1,3 +1,66 @@
+@font-face {
+  font-family: "Archivo";
+  src: url("./assets/fonts/archivo/Archivo-Regular.ttf") format("truetype");
+  font-weight: normal;
+}
+@font-face {
+  font-family: "Archivo";
+  src: url("./assets/fonts/archivo/Archivo-Bold.ttf") format("truetype");
+  font-weight: bold;
+}
+@font-face {
+  font-family: "Archivo";
+  src: url("./assets/fonts/archivo/Archivo-SemiBold.ttf") format("truetype");
+  font-weight: 600;
+}
+@font-face {
+  font-family: "Archivo";
+  src: url("./assets/fonts/archivo/Archivo-Medium.ttf") format("truetype");
+  font-weight: 500;
+}
+
+@font-face {
+  font-family: "Chillax";
+  src: url("./assets/fonts/chillax/Chillax-Regular.ttf") format("truetype");
+  font-weight: normal;
+}
+@font-face {
+  font-family: "Chillax";
+  src: url("./assets/fonts/chillax/Chillax-Bold.ttf") format("truetype");
+  font-weight: bold;
+}
+@font-face {
+  font-family: "Chillax";
+  src: url("./assets/fonts/chillax/Chillax-SemiBold.ttf") format("truetype");
+  font-weight: 600;
+}
+@font-face {
+  font-family: "Chillax";
+  src: url("./assets/fonts/chillax/Chillax-Medium.ttf") format("truetype");
+  font-weight: 500;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  body {
+    @apply font-archivo tracking-[-4%];
+  }
+}
+
+@layer components {
+  button.active{
+    @apply bg-black text-white;
+  }
+}
+
+@layer utilities {
+  .text-stroke {
+    -webkit-text-stroke: 1px white;
+  }
+  .text-stroke-black {
+    -webkit-text-stroke: 1px #C3C3C3;
+  }
+}
