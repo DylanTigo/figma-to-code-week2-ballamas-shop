@@ -63,6 +63,13 @@
   .text-stroke-black {
     -webkit-text-stroke: 1px black;
   }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar{
+    -ms-overflow-style: none;  
+    scrollbar-width: none; 
+  }
   .highContainer {
     @apply max-w-12xl box-content mx-auto px-5 sm:px-11 lg:px-8;
   }

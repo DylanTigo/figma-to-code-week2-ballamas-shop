@@ -6,7 +6,7 @@ import { Link } from "react-router-dom"
 
 export default function Card() {
   return (
-    <article className="w-full space-y-4 group">
+    <article className="w-full space-y-4 group shrink-0">
         <div className="h-xl relative rounded-4xl overflow-hidden">
           <Link to={"/product/1"} className="w-full h-full absolute top-0 left-0 bg-black/50 rounded-4xl flex justify-center items-end gap-1 p-7 opacity-0 group-hover:opacity-100 transition-opacity">
             <Button variant="secondary"><img src={card} alt="card icon" />Add to cart</Button>
