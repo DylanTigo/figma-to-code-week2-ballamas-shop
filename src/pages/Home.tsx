@@ -38,7 +38,7 @@ export default function Home() {
       <section>
         <div className="space-y-8">
           <FilterNav/>
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(20rem,20rem))] gap-4 justify-center">
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(20rem,30%))] gap-4 justify-center">
             <Card/>
             <Card/>
             <Card/>
@@ -46,7 +46,7 @@ export default function Home() {
             <Card/>
             <Card/>
           </div>
-          <Button variant="secondary" className="mx-auto">View more</Button>
+          <Button variant="secondary" className="mx-auto outline outline-1 outline-black">View more</Button>
         </div>
       </section>
       <section className="space-y-8">
@@ -54,14 +54,14 @@ export default function Home() {
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold font-chillax">OUR COLLECTION</h2>
           <p className="text-gray-dark text-sm sm:text-base lg:text-lg">Our latest collection, where classic and contemporary styles converge in perfect harmony.</p>
         </div>
-        <div className="flex max-sm:flex-col gap-4">
-          <div className="relative h-[446px] w-xl rounded-4xl bg-cover overflow-hidden"
+        <div className="flex max-md:flex-col gap-4">
+          <div className="relative h-[446px] w-full md:w-xl rounded-4xl bg-cover overflow-hidden"
           style={{
             backgroundImage: `url(${collectionBG1})`,
           }}
           >
             <div className="p-6 flex items-end justify-center absolute inset-0 bg-black/20">
-              <Button variant="secondary" className="outline-none">LEARN MORE <img src={arrow} alt="arrow icon" className="size-5"/></Button>
+              <Button variant="secondary">LEARN MORE <img src={arrow} alt="arrow icon" className="size-5"/></Button>
             </div>
           </div>
           <div className="relative h-[446px] rounded-4xl bg-no-repeat bg-cover bg-[center_45%] overflow-hidden grow"

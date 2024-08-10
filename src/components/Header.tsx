@@ -5,8 +5,8 @@ import Logo from "./ui/Logo"
 
 export default function Header() {
   return (
-    <header className="w-full sticky top-0 left-0 z-50 bg-white">
-      <div className="max-w-12xl mx-auto py-5 flex justify-between items-center">
+    <header className="stickytop-0 left-0 z-50 bg-white">
+      <div className="highContainer py-5 flex justify-between items-center">
         <nav className="flex gap-4.5">
           <a href="#">Men</a>
           <a href="#">Women</a>

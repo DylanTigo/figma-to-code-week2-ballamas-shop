@@ -7,7 +7,7 @@ type ButtonProps = React.HTMLAttributes<HTMLButtonElement> & {
 
 export default function Button( { variant, big, className, ...props }: ButtonProps ) {
 
-  const size = big ? 'w-full h-16' : 'w-fit h-auto'
+  const size = big ? 'w-full h-auto sm:h-16' : 'w-fit h-auto'
 
   return (
     <button {...props} className={buttonVariants({ variant }) + " "+ size + " " + className} />
@@ -20,8 +20,8 @@ const buttonVariants = cva(
     variants: {
       variant: {
         primary: 'bg-black text-white hover:bg-black/80',
-        secondary: 'bg-white text-black outline outline-2 ouline-black hover:bg-white/80',
-        tertiary: 'bg-none text-white outline outline-2 ouline-white hover:text-black hover:bg-white/80',
+        secondary: 'bg-white text-black hover:bg-white/80',
+        tertiary: 'bg-white text-white outline outline-2 ouline-white hover:bg-white/80',
       },
     },
     defaultVariants: {

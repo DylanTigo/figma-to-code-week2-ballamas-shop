@@ -4,8 +4,8 @@ import Logo from "./ui/Logo";
 export default function Footer() {
   return (
     <footer className="bg-black text-gray relative bottom-0 w-full py-13">
-      <div className="space-y-8">
-        <div className="flex justify-between max-w-12xl mx-auto">
+      <div className="space-y-8 highContainer">
+        <div className="flex max-lg:flex-col gap-4 justify-between max-w-12xl mx-auto">
           <div className="space-y-5">
             <Logo variant="white" />
             <div className="flex flex-col gap-4 lg:max-w-[450px]">
@@ -17,7 +17,7 @@ export default function Footer() {
                 <input
                   type="email"
                   placeholder="Your email"
-                  className="w-full rounded-4xl bg-transparent text-sm border px-3.5 border-gray"
+                  className="w-full rounded-4xl bg-transparent text-sm border px-3.5 border-gray max-lg:max-w-[50%]"
                 />
                 <Button variant="secondary">Subscribe</Button>
               </form>
