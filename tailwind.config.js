@@ -9,6 +9,7 @@ export default {
       fontFamily: {
         "archivo": ["Archivo", "sans-serif"],
         "chillax": ["Chillax", "sans-serif"],
+        "jetbrains": ["JetBrains Mono", "monospace"],
       },
       width: {
         "xl": "305px",
