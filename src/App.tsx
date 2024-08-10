@@ -7,7 +7,7 @@ function App() {
   return (
     <>
       <Header/>
-      <main className="max-w-12xl mx-auto">
+      <main className="highContainer">
         <Outlet/>
       </main>
       <Footer/>
