@@ -15,7 +15,7 @@ export default function Menu( { menuActive }: MenuProps ) {
     }
   }, [menuActive])
   return (
-    <nav ref={nav} className="absolute z-20 top-0 left-0 space-y-11 bg-white w-full h-lvh auto-alpha transition-opacity duration-500 pt-36 sm:pt-[150px]">
+    <nav ref={nav} className="fixed z-20 top-0 left-0 space-y-11 bg-white w-full h-lvh auto-alpha transition-opacity duration-500 pt-36 sm:pt-[150px]">
       <div className="flex text-lg flex-col items-center justify-center gap-4.5">
         <a href="#" className="w-full text-center">Men</a>
         <a href="#" className="w-full text-center">Women</a>
