@@ -18,6 +18,11 @@
   src: url("./assets/fonts/archivo/Archivo-Medium.ttf") format("truetype");
   font-weight: 500;
 }
+@font-face {
+  font-family: "Archivo";
+  src: url("./assets/fonts/archivo/Archivo-ExtraBold.ttf") format("truetype");
+  font-weight: 800;
+}
 
 @font-face {
   font-family: "Chillax";
