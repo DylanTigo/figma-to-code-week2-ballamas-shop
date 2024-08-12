@@ -7,7 +7,7 @@ function App() {
   return (
     <>
       <Header />
-      <main className="highContainer">
+      <main className="highContainer grow">
         <Outlet/>
       </main>
       <Footer/>

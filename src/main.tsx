@@ -7,6 +7,7 @@ import Home from './pages/Home.tsx'
 import ProductDetails from './pages/ProductDetails.tsx'
 import Cart from './pages/Cart.tsx'
 import Checkout from './pages/Checkout.tsx'
+import Payement from './pages/Payement.tsx'
 
 const router = createBrowserRouter([
   {
@@ -29,6 +30,10 @@ const router = createBrowserRouter([
         path: '/checkout',
         element: <Checkout />,
       },
+      {
+        path: "/payment",
+        element: <Payement/>
+      }
     ],
   },
 ])
