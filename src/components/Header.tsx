@@ -22,7 +22,7 @@ export default function Header() {
     <>
       <header className="sticky top-0 left-0 z-50 bg-white">
         <div className="text-center bg-black text-[10px] sm:text-xs text-white py-4 font-normal font-jetbrains">Sign up and get 20% off for all new arrivals collections</div>
-        <div className="highContainer py-5 border-b border-gray-light flex justify-between items-center">
+        <div className="highContainer py-5 border-b border-gray-light flex justify-between items-center relative">
           <nav className="flex gap-4.5 max-lg:hidden">
             <a href="#">Men</a>
             <a href="#">Women</a>
@@ -30,7 +30,7 @@ export default function Header() {
             <a href="#">Collection</a>
           </nav>
           <ToggleMenuBtn menuActive={menuActive} setMenuActive={setMenuActive}/>
-          <NavLink to={"/"} className="flex items-center">
+          <NavLink to={"/"} className="flex items-center absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
             <Logo variant="black"/>
           </NavLink>
           <nav className="flex gap-4.5">
