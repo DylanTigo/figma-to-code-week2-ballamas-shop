@@ -53,6 +53,9 @@
   body {
     @apply font-archivo tracking-[-4%];
   }
+  ::placeholder {
+    @apply text-xs;
+  }
 }
 
 @layer components {

@@ -1,4 +1,5 @@
 import Button from "./ui/Button";
+import Input from "./ui/Input";
 import Logo from "./ui/Logo";
 
 export default function Footer() {
@@ -14,11 +15,9 @@ export default function Footer() {
                 discount for all items
               </p>
               <form className="flex gap-1 items-stretch">
-                <input
-                  type="email"
-                  placeholder="Your email"
-                  className="w-full rounded-4xl bg-transparent text-sm border px-3.5 border-gray max-lg:max-w-[50%]"
-                />
+                <div className="sm:max-w-[50%] w-full">
+                  <Input type="email" placeholder="Your email" />
+                </div>
                 <Button variant="secondary">Subscribe</Button>
               </form>
             </div>
