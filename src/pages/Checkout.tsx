@@ -185,7 +185,7 @@ export default function Checkout() {
               </div>
             </fieldset>
 
-            <fieldset className="space-y-3 text-xs">
+            <fieldset className="space-y-3 text-xs mb-5.5">
               <legend className="font-semibold text-sm">Payment method</legend>
               <div className="flex max-sm:flex-col gap-3">
                 <label className="flex flex-col gap-1.5 px-3 py-4 border border-gray-light rounded-xl w-full cursor-pointer relative">
@@ -214,6 +214,7 @@ export default function Checkout() {
                 Use shipping address as billing address
               </label>
             </fieldset>
+
             <Link to={"/payment"}>
               <Button className="w-full max-w-[316px] mx-auto">Pay ${shippingPrice.toFixed(2)} <img src={arrowRight} alt="arrow right" className="size-4"/></Button>
             </Link>

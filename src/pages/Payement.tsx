@@ -1,6 +1,8 @@
 import success from "../assets/svg/success.svg";
+import useScrollTop from "../hooks/useScrollTop";
 
 export default function Payement() {
+  useScrollTop()
   return (
     <div className='mx-auto py-28 sm:py-32 lg:py-36 min-h-[65vh]'>
         <div className="flex flex-col gap-2.5 justify-center items-center">

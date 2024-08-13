@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import Resizer from "react-image-file-resizer";
 import { Product } from "../../types/productTypes";
 
 // Convertir un id de produit en un id STRING
@@ -18,17 +19,54 @@ const fetchGraphQL = async (query: string): Promise<any> => {
   return data;
 };
 
-// Extraction des informations de produit depuis les nœuds GraphQL
-const mapProduct = (node: any): Product => ({
-  id: node.id,
-  productId: convertId(node.id),
-  title: node.title,
-  description: node.description || "",
-  amount: node.variants.edges[0]?.node.price.amount,
-  featuredImage: node.featuredImage.edges[0]?.node.url,
-  ...defaultProductValues,
-});
 
+const resizeImage = (imageUrl: string, maxWidth: number, maxHeight: number): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    // Fonction pour convertir l'URL en Blob
+    const convertUrlToBlob = async (url: string): Promise<Blob> => {
+      const response = await fetch(url);
+      return await response.blob();
+    };
+
+    convertUrlToBlob(imageUrl)
+      .then(blob => {
+        Resizer.imageFileResizer(
+          blob,
+          maxWidth,
+          maxHeight,
+          'JPEG',
+          80,
+          0,
+          (uri) => {
+            resolve(uri as string);
+          },
+          'base64',
+          undefined,
+        );
+      })
+      .catch(error => {
+        reject(error);
+      });
+  });
+};
+
+// Extraction des informations de produit depuis les nœuds GraphQL
+const mapProduct = async (node: any): Promise<Product> => {
+  const featuredImageUrl = node.featuredImage.edges[0]?.node.url;
+  const resizedImageUrl = featuredImageUrl 
+    ? await resizeImage(featuredImageUrl, 700, 700) // Ajustez ces valeurs selon vos besoins
+    : '';
+
+  return {
+    id: node.id,
+    productId: convertId(node.id),
+    title: node.title,
+    description: node.description || "",
+    amount: node.variants.edges[0]?.node.price.amount,
+    featuredImage: resizedImageUrl,
+    ...defaultProductValues,
+  };
+};
 // Récupération de la liste des produits
 export const getProducts = async (): Promise<Product[]> => {
   const query = `
@@ -61,7 +99,10 @@ export const getProducts = async (): Promise<Product[]> => {
     }
   `;
   const response = await fetchGraphQL(query);
-  return response.data.products.edges.map((edge: any) => mapProduct(edge.node));
+  const products = await Promise.all(
+    response.data.products.edges.map((edge: any) => mapProduct(edge.node))
+  );
+  return products;
 };
 
 // Récupération d'un produit par son ID
@@ -92,26 +133,47 @@ export const getProduct = async (id: string): Promise<Product> => {
     }
   `;
   const response = await fetchGraphQL(query);
-  return mapProduct(response.data.product);
+  return await mapProduct(response.data.product);
 };
 
 export const getRecommendations = async (id: string): Promise<Product[]> => {
-  const request = await fetch(
-    `https://mock.shop/api?query={productRecommendations(productId:%20%22${id}%22){id%20title%20featuredImage%20{url}%20variants(first:%201){edges%20{node%20{price%20{amount}}}}}}`
-  );
-  const response = await request.json();
+  const query = `
+    {
+      productRecommendations(productId: "${id}") {
+        id
+        title
+        description
+        featuredImage {
+          url
+        }
+        variants(first: 1) {
+          edges {
+            node {
+              price {
+                amount
+              }
+            }
+          }
+        }
+      }
+    }
+  `;
 
-  const products: Product[] = response.data.productRecommendations.map(
-    (recommendation: any) => ({
-      id: recommendation.id,
-      productId: convertId(recommendation.id),
-      title: recommendation.title,
-      description: "",
-      amount: recommendation.variants.edges[0]?.node.price.amount,
-      featuredImage: recommendation.featuredImage?.url,
-      ...defaultProductValues,
-    })
+  const response = await fetchGraphQL(query);
+  const products: Promise<Product>[] = response.data.productRecommendations.map(
+    async (recommendation: any) => {
+      const adaptedRecommendation = {
+        ...recommendation,
+        featuredImage: {
+          edges: recommendation.featuredImage?.url
+            ? [{ node: { url: recommendation.featuredImage.url } }]
+            : [],
+        },
+      };
+
+      return mapProduct(adaptedRecommendation);
+    }
   );
 
-  return products;
+  return Promise.all(products);
 };

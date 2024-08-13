@@ -1,6 +1,6 @@
 export default function Loader() {
   return (
-    <div className="w-full h-full min-h-[65lvh] flex justify-center items-center">
+    <div className="w-full h-full min-h-[65lvh] flex justify-center items-center col-span-full">
       <div className="flex items-center gap-3 text-base">
         <svg
           xmlns="http://www.w3.org/2000/svg"

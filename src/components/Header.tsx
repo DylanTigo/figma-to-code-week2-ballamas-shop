@@ -17,7 +17,7 @@ export default function Header() {
       setMenuActive(false)
     }
   }, [width])
-
+  
   const products = useCartStore((state) => state.products)
 
   return (
@@ -40,10 +40,10 @@ export default function Header() {
               <Link to="#">Shop</Link>
               <Link to="#">About Us</Link>
               <Link to="#" className="flex items-center gap-x-2.5"><img src={user} alt="user icon" className="size-4.5"/> Account</Link>
-              <Link to="/cart">Cart({products.length})</Link>
+              <Link to="/cart">Cart(<span className="transition-transform">{ products.length}</span>)</Link>
             </div>
             <Link to="#"><img src={searchIcon} alt="search icon" className="size-5" /></Link>
-            <Link to="/cart" className="lg:hidden relative"><img src={card} alt="card icon" className="size-5" /><div className="size-3 flex justify-center items-center text-[8px] bg-black text-gray-light absolute -right-0.5 -bottom-0.5 rounded-full">{ products.length}</div></Link>
+            <Link to="/cart" className="lg:hidden relative"><img src={card} alt="card icon" className="size-5" /><div className="size-3 flex transition-transform justify-center items-center text-[8px] bg-black text-gray-light absolute -right-0.5 -bottom-0.5 rounded-full">{ products.length}</div></Link>
           </nav>
         </div>
       </header>
