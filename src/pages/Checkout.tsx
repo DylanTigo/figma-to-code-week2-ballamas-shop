@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import CheckoutCard from "../components/CheckoutCard";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
@@ -7,13 +7,32 @@ import card from "../assets/svg/card.svg";
 import bank from "../assets/svg/bank.svg";
 import lock from "../assets/svg/lock.svg";
 import arrowRight from "../assets/svg/arrow-right.svg";
+import { useCartStore } from "../services/stores/store";
+import { Link } from "react-router-dom";
+import useScrollTop from "../hooks/useScrollTop";
 
 export default function Checkout() {
-  const [shipping, setShipping] = useState("regular");
-
+  useScrollTop()
+  const [shipping, setShipping] = useState("free");
   function handleShipping(e: React.ChangeEvent<HTMLInputElement>) {
     setShipping(e.target.value);
   }
+  
+  const totalPrice = useCartStore((state) => state.getTotalPrice());
+  const [shippingPrice, setShippingPrice] = useState(totalPrice);
+
+  useEffect(() => {
+    if (shipping === "free") {
+      setShippingPrice(totalPrice)
+    }else if (shipping === "regular") {
+      setShippingPrice(totalPrice + 7.50)
+    } else if (shipping === "express") {
+      setShippingPrice(totalPrice + 22.50)
+    }
+  },[shipping, totalPrice])
+
+  const products = useCartStore((state) => state.products);
+  const discount = 0
 
   return (
     <div className="mt-16 mb-24 space-y-5 text-sm">
@@ -21,7 +40,7 @@ export default function Checkout() {
         Checkout
       </h2>
       <div className="grid grid-cols-11">
-        <div className="col-span-full lg:col-span-6 space-y-6">
+        <div className="col-span-full lg:col-span-6 space-y-6 lg:mr-16">
           <div className="space-y-1">
             <h3 className="font-semibold ">Your Order</h3>
             <p className="text-gray-dark text-xs">
@@ -38,10 +57,9 @@ export default function Checkout() {
           </div>
           <div className="space-y-6">
             <div className="space-y-3">
-              <CheckoutCard />
-              <CheckoutCard />
-              <CheckoutCard />
-              <CheckoutCard />
+              { products.map((product) => (
+                <CheckoutCard key={product.id} product={product} />
+              )) }
             </div>
             <div className="space-y-1 text-xs text-black">
               <h4>Discount Code</h4>
@@ -63,16 +81,16 @@ export default function Checkout() {
               <div className="space-y-1 text-gray-dark pb-3 border-b border-gray-light">
                 <div className="flex justify-between">
                   <span>Subtotal</span>
-                  <span>$147.00</span>
+                  <span>${ totalPrice}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Discount</span>
-                  <span>$0</span>
+                  <span>${discount}</span>
                 </div>
               </div>
               <div className="flex justify-between font-semibold">
                 <span>Order total</span>
-                <span>$147.00</span>
+                <span>${ totalPrice}</span>
               </div>
             </div>
             <div className="space-y-3.5 ">
@@ -196,7 +214,9 @@ export default function Checkout() {
                 Use shipping address as billing address
               </label>
             </fieldset>
-            <Button type="submit" className="w-full max-w-[316px] mx-auto">Pay $524.00 <img src={arrowRight} alt="arrow right" className="size-4"/></Button>
+            <Link to={"/payment"}>
+              <Button className="w-full max-w-[316px] mx-auto">Pay ${shippingPrice.toFixed(2)} <img src={arrowRight} alt="arrow right" className="size-4"/></Button>
+            </Link>
           </form>
         </div>
       </div>

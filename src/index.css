@@ -51,7 +51,7 @@
 
 @layer base {
   body {
-    @apply font-archivo tracking-[-4%];
+    @apply font-archivo tracking-[-4%] scroll-smooth;
   }
   ::placeholder {
     @apply text-xs;
