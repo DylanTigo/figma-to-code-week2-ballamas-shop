@@ -1,18 +1,20 @@
-import { Outlet } from "react-router-dom"
-import Header from "./components/Header"
-import Footer from "./components/Footer"
+import { Outlet } from "react-router-dom";
+import Header from "./components/Header";
+import Footer from "./components/Footer";
+import useSmoothScroll from "./hooks/useSmoothScroll";
 
 function App() {
+  useSmoothScroll();
 
   return (
     <>
       <Header />
       <main className="highContainer">
-        <Outlet/>
+        <Outlet />
       </main>
-      <Footer/>
+      <Footer />
     </>
-  )
+  );
 }
 
-export default App
+export default App;

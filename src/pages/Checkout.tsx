@@ -1,45 +1,104 @@
-import { useEffect, useState } from "react";
+import { FormEvent, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import CheckoutCard from "../components/CheckoutCard";
-import Button from "../components/ui/Button";
+import Button, { ButtonLink } from "../components/ui/Button";
 import Input from "../components/ui/Input";
 import InputGroup from "../components/InputGroup";
+import OrderSummary from "../components/OrderSummary";
 import card from "../assets/svg/card.svg";
 import bank from "../assets/svg/bank.svg";
 import lock from "../assets/svg/lock.svg";
 import arrowRight from "../assets/svg/arrow-right.svg";
-import { useCartStore } from "../services/stores/store";
-import { Link } from "react-router-dom";
-import useScrollTop from "../hooks/useScrollTop";
+import {
+  SHIPPING_OPTIONS,
+  ShippingMethod,
+  selectCurrency,
+  selectDiscount,
+  selectSubtotal,
+  useCartStore,
+} from "../services/stores/store";
+import { formatPrice } from "../utils/format";
+
+type PaymentMethod = "card" | "bank-transfer";
+
+// Mise en forme pendant la saisie : "4242424242424242" -> "4242 4242 4242 4242"
+const formatCardNumber = (value: string) =>
+  value
+    .replace(/\D/g, "")
+    .slice(0, 19)
+    .replace(/(\d{4})(?=\d)/g, "$1 ");
+
+// "1228" -> "12/28"
+const formatExpiry = (value: string) => {
+  const digits = value.replace(/\D/g, "").slice(0, 4);
+  return digits.length > 2 ? `${digits.slice(0, 2)}/${digits.slice(2)}` : digits;
+};
 
 export default function Checkout() {
-  useScrollTop()
-  const [shipping, setShipping] = useState("free");
-  function handleShipping(e: React.ChangeEvent<HTMLInputElement>) {
-    setShipping(e.target.value);
-  }
-  
-  const totalPrice = useCartStore((state) => state.getTotalPrice());
-  const [shippingPrice, setShippingPrice] = useState(totalPrice);
+  const navigate = useNavigate();
+  const items = useCartStore((state) => state.items);
+  const subtotal = useCartStore(selectSubtotal);
+  const discount = useCartStore(selectDiscount);
+  const currency = useCartStore(selectCurrency);
+  const discountCode = useCartStore((state) => state.discountCode);
+  const applyDiscountCode = useCartStore((state) => state.applyDiscountCode);
+  const removeDiscountCode = useCartStore((state) => state.removeDiscountCode);
+  const placeOrder = useCartStore((state) => state.placeOrder);
 
-  useEffect(() => {
-    if (shipping === "free") {
-      setShippingPrice(totalPrice)
-    }else if (shipping === "regular") {
-      setShippingPrice(totalPrice + 7.50)
-    } else if (shipping === "express") {
-      setShippingPrice(totalPrice + 22.50)
+  const [shipping, setShipping] = useState<ShippingMethod>("free");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card");
+  const [codeInput, setCodeInput] = useState("");
+  const [codeError, setCodeError] = useState<string | null>(null);
+  const [cardNumber, setCardNumber] = useState("");
+  const [expiry, setExpiry] = useState("");
+
+  const shippingPrice = SHIPPING_OPTIONS[shipping].price;
+  const total = subtotal - discount + shippingPrice;
+
+  const handleApplyCode = (e: FormEvent) => {
+    e.preventDefault();
+    if (applyDiscountCode(codeInput)) {
+      setCodeError(null);
+      setCodeInput("");
+    } else {
+      setCodeError("This code is not valid.");
     }
-  },[shipping, totalPrice])
+  };
 
-  const products = useCartStore((state) => state.products);
-  const discount = 0
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const data = new FormData(e.currentTarget);
+    placeOrder({
+      email: String(data.get("email") ?? ""),
+      firstName: String(data.get("first-name") ?? ""),
+      items,
+      subtotal,
+      discount,
+      shipping: shippingPrice,
+      total,
+      currencyCode: currency,
+    });
+    navigate("/payment", { replace: true });
+  };
+
+  if (items.length === 0) {
+    return (
+      <div className="mt-16 mb-24 min-h-[45vh] flex flex-col items-center justify-center gap-4 text-center">
+        <h2 className="font-semibold font-chillax text-lg sm:text-2xl">
+          Nothing to checkout yet
+        </h2>
+        <p className="text-gray-dark text-sm">Your cart is empty.</p>
+        <ButtonLink to="/#products">Start shopping</ButtonLink>
+      </div>
+    );
+  }
 
   return (
     <div className="mt-16 mb-24 space-y-5 text-sm">
       <h2 className="font-semibold font-chillax text-lg sm:text-2xl">
         Checkout
       </h2>
-      <div className="grid grid-cols-11">
+      <div className="grid grid-cols-11 gap-y-10">
         <div className="col-span-full lg:col-span-6 space-y-6 lg:mr-16">
           <div className="space-y-1">
             <h3 className="font-semibold ">Your Order</h3>
@@ -57,167 +116,216 @@ export default function Checkout() {
           </div>
           <div className="space-y-6">
             <div className="space-y-3">
-              { products.map((product) => (
-                <CheckoutCard key={product.id} product={product} />
-              )) }
+              {items.map((item) => (
+                <CheckoutCard key={item.variantId} item={item} />
+              ))}
             </div>
             <div className="space-y-1 text-xs text-black">
-              <h4>Discount Code</h4>
-              <form className="flex gap-2 items-stretch">
-                <div className="sm:max-w-[50%] w-full">
-                  <Input type="email" placeholder="Your email" />
+              <label htmlFor="discount-code">Discount Code</label>
+              {discountCode ? (
+                <div className="flex items-center gap-3">
+                  <span className="px-3 py-2 rounded-full bg-gray-light/60 font-semibold">
+                    {discountCode} applied
+                  </span>
+                  <button
+                    type="button"
+                    onClick={removeDiscountCode}
+                    className="underline text-gray-dark"
+                  >
+                    Remove
+                  </button>
                 </div>
-                <Button>Apply</Button>
-              </form>
-              <p>
-                New customer?{" "}
-                <a href="#" className="underline">
-                  Signup
-                </a>{" "}
-                <span className="text-gray-dark">to get better offer</span>
+              ) : (
+                <form onSubmit={handleApplyCode} className="flex gap-2 items-stretch">
+                  <div className="sm:max-w-[50%] w-full">
+                    <Input
+                      id="discount-code"
+                      type="text"
+                      placeholder="Enter your code"
+                      value={codeInput}
+                      onChange={(e) => {
+                        setCodeInput(e.target.value);
+                        setCodeError(null);
+                      }}
+                      aria-invalid={Boolean(codeError)}
+                      aria-describedby="discount-help"
+                    />
+                  </div>
+                  <Button type="submit" disabled={!codeInput.trim()} className="disabled:opacity-60">
+                    Apply
+                  </Button>
+                </form>
+              )}
+              <p id="discount-help" className={codeError ? "text-red-600" : ""}>
+                {codeError ?? (
+                  <>
+                    New customer? Use{" "}
+                    <span className="font-semibold">WELCOME20</span>{" "}
+                    <span className="text-gray-dark">to get 20% off</span>
+                  </>
+                )}
               </p>
             </div>
-            <div className="space-y-3 ">
-              <div className="space-y-1 text-gray-dark pb-3 border-b border-gray-light">
-                <div className="flex justify-between">
-                  <span>Subtotal</span>
-                  <span>${ totalPrice}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Discount</span>
-                  <span>${discount}</span>
-                </div>
-              </div>
-              <div className="flex justify-between font-semibold">
-                <span>Order total</span>
-                <span>${ totalPrice}</span>
-              </div>
-            </div>
-            <div className="space-y-3.5 ">
-              <h4 className="font-semibold">Shipping method</h4>
+            <OrderSummary shipping={shippingPrice} />
+            <fieldset className="space-y-3.5">
+              <legend className="font-semibold mb-3.5">Shipping method</legend>
               <div className="flex flex-col gap-3">
-                <label className="p-3 border border-gray-light rounded-xl flex items-center justify-between cursor-pointer">
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="radio"
-                      value="free"
-                      checked={shipping === "free"}
-                      onChange={handleShipping}
-                      className="size-4.5"
-                    />
-                    <div className="space-y-0.5">
-                      <div >Free Shipping</div>
-                      <div className="text-xs text-gray-dark">
-                        7-30 business days
+                {(Object.keys(SHIPPING_OPTIONS) as ShippingMethod[]).map((method) => {
+                  const option = SHIPPING_OPTIONS[method];
+                  return (
+                    <label
+                      key={method}
+                      className={`p-3 border rounded-xl flex items-center justify-between cursor-pointer transition-colors ${
+                        shipping === method ? "border-black" : "border-gray-light"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="radio"
+                          name="shipping"
+                          value={method}
+                          checked={shipping === method}
+                          onChange={() => setShipping(method)}
+                          className="size-4.5 accent-black"
+                        />
+                        <div className="space-y-0.5">
+                          <div>{option.label}</div>
+                          <div className="text-xs text-gray-dark">{option.delay}</div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                  <span>$0</span>
-                </label>
-                <label className="p-3 border border-gray-light rounded-xl flex items-center justify-between cursor-pointer">
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="radio"
-                      value="regular"
-                      checked={shipping === "regular"}
-                      onChange={handleShipping}
-                      className="size-4.5 focus:ring-black"
-                    />
-                    <div className="space-y-0.5">
-                      <div >Regular Shipping</div>
-                      <div className="text-xs text-gray-dark">
-                        3-14 business days
-                      </div>
-                    </div>
-                  </div>
-                  <span>$7,50</span>
-                </label>
-                <label className="p-3 border border-gray-light rounded-xl flex items-center justify-between cursor-pointer">
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="radio"
-                      value="express"
-                      checked={shipping === "express"}
-                      onChange={handleShipping}
-                      className="size-4.5 focus:ring-black"
-                    />
-                    <div className="space-y-0.5">
-                      <div >Express Shipping</div>
-                      <div className="text-xs text-gray-dark">
-                        1-3 business days
-                      </div>
-                    </div>
-                  </div>
-                  <span>$22,50</span>
-                </label>
+                      <span>{formatPrice(option.price, currency)}</span>
+                    </label>
+                  );
+                })}
               </div>
-            </div>
+            </fieldset>
           </div>
         </div>
-        <div className="col-span-full lg:col-span-5  space-y-4">
+        <div className="col-span-full lg:col-span-5 space-y-4">
           <div className="space-y-1">
             <h3 className="font-semibold ">Payment details</h3>
             <p className="text-gray-dark text-xs">
               Complete your purchase by providing your payment details.
             </p>
           </div>
-          <form className="space-y-5.5">
-
+          <form className="space-y-5.5" onSubmit={handleSubmit}>
             <fieldset className="space-y-3 text-xs">
-              <legend className="font-semibold text-sm">Shipping address</legend>
+              <legend className="font-semibold text-sm mb-3">Shipping address</legend>
               <div className="space-y-3">
                 <div className="flex max-sm:flex-col gap-3">
-                  <InputGroup label="First name" id="first-name" inputType="text" placeholder="Enter your first name" />
-                  <InputGroup label="Last name" id="last-name" inputType="text" placeholder="Enter your last name" />
+                  <InputGroup label="First name" id="first-name" type="text" placeholder="Enter your first name" autoComplete="given-name" required />
+                  <InputGroup label="Last name" id="last-name" type="text" placeholder="Enter your last name" autoComplete="family-name" required />
                 </div>
                 <div className="flex max-sm:flex-col gap-3">
-                  <InputGroup label="Email address" id="email" inputType="email" placeholder="Enter your email address" />
-                  <InputGroup label="Phone number" id="phone" inputType="tel" placeholder="Enter your phone number" />
+                  <InputGroup label="Email address" id="email" type="email" placeholder="Enter your email address" autoComplete="email" required />
+                  <InputGroup label="Phone number" id="phone" type="tel" placeholder="Enter your phone number" autoComplete="tel" pattern="\+?[0-9 ]{6,20}" required />
                 </div>
                 <div className="flex max-sm:flex-col gap-3">
-                  <InputGroup label="Address" id="address" inputType="text" placeholder="Enter your address" />
-                  <InputGroup label="City" id="city" inputType="text" placeholder="Enter your city" />
+                  <InputGroup label="Address" id="address" type="text" placeholder="Enter your address" autoComplete="street-address" required />
+                  <InputGroup label="City" id="city" type="text" placeholder="Enter your city" autoComplete="address-level2" required />
                 </div>
                 <div className="flex max-sm:flex-col gap-3">
-                  <InputGroup label="Region" id="region" inputType="text" placeholder="Enter your region" />
-                  <InputGroup label="Postal code" id="postal-code" inputType="text" placeholder="Enter your postal code" />
+                  <InputGroup label="Region" id="region" type="text" placeholder="Enter your region" autoComplete="address-level1" />
+                  <InputGroup label="Postal code" id="postal-code" type="text" placeholder="Enter your postal code" autoComplete="postal-code" required />
                 </div>
               </div>
             </fieldset>
 
             <fieldset className="space-y-3 text-xs mb-5.5">
-              <legend className="font-semibold text-sm">Payment method</legend>
+              <legend className="font-semibold text-sm mb-3">Payment method</legend>
               <div className="flex max-sm:flex-col gap-3">
-                <label className="flex flex-col gap-1.5 px-3 py-4 border border-gray-light rounded-xl w-full cursor-pointer relative">
-                  <input type="radio" name="payment-method" value="debit-card" className="opacity-0 absolute" />
-                  <img src={card} alt="card icon" className="size-5"/>
-                  <span>Debit/Credit Cart</span>
-                </label>
-                <label className="flex flex-col gap-1.5 px-3 py-4 border border-gray-light rounded-xl w-full cursor-pointer relative">
-                  <input type="radio" name="payment-method" value="bank-transfer" className="opacity-0 absolute" />
-                  <img src={bank} alt=" bank icon" className="size-5"/>
-                  <span>Bank Transfer</span>
-                </label>
+                {(
+                  [
+                    { value: "card", icon: card, label: "Debit/Credit Card" },
+                    { value: "bank-transfer", icon: bank, label: "Bank Transfer" },
+                  ] as const
+                ).map((method) => (
+                  <label
+                    key={method.value}
+                    className={`flex flex-col gap-1.5 px-3 py-4 border rounded-xl w-full cursor-pointer relative transition-colors has-[:focus-visible]:outline has-[:focus-visible]:outline-2 ${
+                      paymentMethod === method.value ? "border-black" : "border-gray-light"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="payment-method"
+                      value={method.value}
+                      checked={paymentMethod === method.value}
+                      onChange={() => setPaymentMethod(method.value)}
+                      className="opacity-0 absolute"
+                    />
+                    <img src={method.icon} alt="" className="size-5" />
+                    <span>{method.label}</span>
+                  </label>
+                ))}
               </div>
-              <div className="space-y-3">
-                <label className="relative">
-                  <Input type="number" placeholder="Card number" />
-                  <img src={lock} alt="card icon" className="absolute right-3.5 top-1/2 -translate-y-1/2 size-5"/>
-                </label>
-                <div className="flex max-sm:flex-col gap-3">
-                  <Input type="text" placeholder="Expiry date" />
-                  <Input type="text" placeholder="Security code" />
+              {paymentMethod === "card" ? (
+                <div className="space-y-3">
+                  <div className="relative">
+                    <Input
+                      name="card-number"
+                      type="text"
+                      inputMode="numeric"
+                      autoComplete="cc-number"
+                      placeholder="Card number"
+                      aria-label="Card number"
+                      pattern="(\d{4} ?){3}\d{1,7}"
+                      value={cardNumber}
+                      onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
+                      required
+                    />
+                    <img src={lock} alt="" className="absolute right-3.5 top-1/2 -translate-y-1/2 size-5" />
+                  </div>
+                  <div className="flex max-sm:flex-col gap-3">
+                    <Input
+                      name="expiry"
+                      type="text"
+                      inputMode="numeric"
+                      autoComplete="cc-exp"
+                      placeholder="Expiry date (MM/YY)"
+                      aria-label="Expiry date"
+                      pattern="(0[1-9]|1[0-2])\/\d{2}"
+                      value={expiry}
+                      onChange={(e) => setExpiry(formatExpiry(e.target.value))}
+                      required
+                    />
+                    <Input
+                      name="cvc"
+                      type="text"
+                      inputMode="numeric"
+                      autoComplete="cc-csc"
+                      placeholder="Security code"
+                      aria-label="Security code"
+                      pattern="\d{3,4}"
+                      maxLength={4}
+                      required
+                    />
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <p className="text-gray-dark leading-5">
+                  Bank details will be sent to your email address. Your order
+                  ships as soon as the transfer is received.
+                </p>
+              )}
               <label className="flex items-center gap-1 font-regular">
-                <input type="checkbox" name="use-shipping-address-as-billing-address" className="size-4.5 rounded-[4px] overflow-hidden" />
+                <input
+                  type="checkbox"
+                  name="use-shipping-address-as-billing-address"
+                  defaultChecked
+                  className="size-4.5 rounded-[4px] overflow-hidden accent-black"
+                />
                 Use shipping address as billing address
               </label>
             </fieldset>
 
-            <Link to={"/payment"}>
-              <Button className="w-full max-w-[316px] mx-auto">Pay ${shippingPrice.toFixed(2)} <img src={arrowRight} alt="arrow right" className="size-4"/></Button>
-            </Link>
+            <Button type="submit" className="w-full max-w-[316px] mx-auto">
+              Pay {formatPrice(total, currency)}
+              <img src={arrowRight} alt="" className="size-4" />
+            </Button>
+            <p className="text-center text-[11px] text-gray-dark">
+              Demo store: no payment is processed and no data leaves your browser.
+            </p>
           </form>
         </div>
       </div>
