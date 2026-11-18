@@ -1,47 +1,56 @@
 @font-face {
   font-family: "Archivo";
-  src: url("./assets/fonts/archivo/Archivo-Regular.ttf") format("truetype");
+  src: url("./assets/fonts/archivo/Archivo-Regular.woff2") format("woff2");
+  font-display: swap;
   font-weight: normal;
 }
 @font-face {
   font-family: "Archivo";
-  src: url("./assets/fonts/archivo/Archivo-Bold.ttf") format("truetype");
+  src: url("./assets/fonts/archivo/Archivo-Bold.woff2") format("woff2");
+  font-display: swap;
   font-weight: bold;
 }
 @font-face {
   font-family: "Archivo";
-  src: url("./assets/fonts/archivo/Archivo-SemiBold.ttf") format("truetype");
+  src: url("./assets/fonts/archivo/Archivo-SemiBold.woff2") format("woff2");
+  font-display: swap;
   font-weight: 600;
 }
 @font-face {
   font-family: "Archivo";
-  src: url("./assets/fonts/archivo/Archivo-Medium.ttf") format("truetype");
+  src: url("./assets/fonts/archivo/Archivo-Medium.woff2") format("woff2");
+  font-display: swap;
   font-weight: 500;
 }
 @font-face {
   font-family: "Archivo";
-  src: url("./assets/fonts/archivo/Archivo-ExtraBold.ttf") format("truetype");
+  src: url("./assets/fonts/archivo/Archivo-ExtraBold.woff2") format("woff2");
+  font-display: swap;
   font-weight: 800;
 }
 
 @font-face {
   font-family: "Chillax";
-  src: url("./assets/fonts/chillax/Chillax-Regular.ttf") format("truetype");
+  src: url("./assets/fonts/chillax/Chillax-Regular.woff2") format("woff2");
+  font-display: swap;
   font-weight: normal;
 }
 @font-face {
   font-family: "Chillax";
-  src: url("./assets/fonts/chillax/Chillax-Bold.ttf") format("truetype");
+  src: url("./assets/fonts/chillax/Chillax-Bold.woff2") format("woff2");
+  font-display: swap;
   font-weight: bold;
 }
 @font-face {
   font-family: "Chillax";
-  src: url("./assets/fonts/chillax/Chillax-SemiBold.ttf") format("truetype");
+  src: url("./assets/fonts/chillax/Chillax-Semibold.woff2") format("woff2");
+  font-display: swap;
   font-weight: 600;
 }
 @font-face {
   font-family: "Chillax";
-  src: url("./assets/fonts/chillax/Chillax-Medium.ttf") format("truetype");
+  src: url("./assets/fonts/chillax/Chillax-Medium.woff2") format("woff2");
+  font-display: swap;
   font-weight: 500;
 }
 
@@ -50,8 +59,11 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    color-scheme: light;
+  }
   body {
-    @apply font-archivo tracking-[-4%] scroll-smooth;
+    @apply font-archivo tracking-[-4%] bg-white text-black antialiased;
   }
   ::placeholder {
     @apply text-xs;

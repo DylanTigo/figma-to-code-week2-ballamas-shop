@@ -1,17 +1,15 @@
 import Input from "./ui/Input";
 
-type InputGroupProps = {
+type InputGroupProps = React.InputHTMLAttributes<HTMLInputElement> & {
   label: string;
   id: string;
-  inputType: string;
-  placeholder: string;
 };
 
-export default function InputGroup({ label, id, inputType, placeholder }: InputGroupProps) {
+export default function InputGroup({ label, id, ...inputProps }: InputGroupProps) {
   return (
     <div className="space-y-1.5 w-full">
       <label htmlFor={id}>{label}</label>
-      <Input type={inputType} placeholder={placeholder} id={id} />
+      <Input id={id} name={id} {...inputProps} />
     </div>
   );
 }

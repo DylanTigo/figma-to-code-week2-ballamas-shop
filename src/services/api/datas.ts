@@ -1,179 +1,242 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import Resizer from "react-image-file-resizer";
-import { Product } from "../../types/productTypes";
+import {
+  Collection,
+  Product,
+  ProductImage,
+  ProductPage,
+  ProductSummary,
+  ProductVariant,
+} from "../../types/productTypes";
 
-// Convertir un id de produit en un id STRING
+const API_URL = import.meta.env.VITE_API_URL || "https://mock.shop/api";
+export const PAGE_SIZE = 6;
+
+// Convertir un id Shopify ("gid://shopify/Product/123") en id court ("123")
 export const convertId = (id: string): string => id.split("/").pop() || "";
+export const toProductGid = (productId: string): string =>
+  `gid://shopify/Product/${productId}`;
 
-// Valeurs par défaut pour les produits
-const defaultProductValues = {
-  quantity: 1,
-  color: "Green",
-  size: "XS",
-};
-
-// Requête GraphQL générique
-const fetchGraphQL = async (query: string): Promise<any> => {
-  const response = await fetch(`https://mock.shop/api?query=${encodeURIComponent(query)}`);
-  const data = await response.json();
-  return data;
-};
-
-
-const resizeImage = (imageUrl: string, maxWidth: number, maxHeight: number): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    // Fonction pour convertir l'URL en Blob
-    const convertUrlToBlob = async (url: string): Promise<Blob> => {
-      const response = await fetch(url);
-      return await response.blob();
-    };
-
-    convertUrlToBlob(imageUrl)
-      .then(blob => {
-        Resizer.imageFileResizer(
-          blob,
-          maxWidth,
-          maxHeight,
-          'JPEG',
-          80,
-          0,
-          (uri) => {
-            resolve(uri as string);
-          },
-          'base64',
-          undefined,
-        );
-      })
-      .catch(error => {
-        reject(error);
-      });
+/**
+ * Requête GraphQL générique.
+ * mock.shop n'accepte plus les requêtes GET : on envoie un POST JSON,
+ * avec les valeurs dynamiques passées en `variables` (pas d'interpolation).
+ */
+async function fetchGraphQL<T>(
+  query: string,
+  variables: Record<string, unknown> = {},
+  signal?: AbortSignal
+): Promise<T> {
+  const response = await fetch(API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ query, variables }),
+    signal,
   });
-};
 
-// Extraction des informations de produit depuis les nœuds GraphQL
-const mapProduct = async (node: any): Promise<Product> => {
-  const featuredImageUrl = node.featuredImage.edges[0]?.node.url;
-  const resizedImageUrl = featuredImageUrl 
-    ? await resizeImage(featuredImageUrl, 700, 700) // Ajustez ces valeurs selon vos besoins
-    : '';
+  if (!response.ok) {
+    throw new Error(`API error ${response.status}`);
+  }
 
+  const json = await response.json();
+  if (json.errors?.length) {
+    throw new Error(json.errors.map((e: any) => e.message).join(", "));
+  }
+  return json.data as T;
+}
+
+const IMAGE_FIELDS = `url altText width height`;
+
+const PRODUCT_CARD_FRAGMENT = `
+  fragment ProductCard on Product {
+    id
+    handle
+    title
+    featuredImage { ${IMAGE_FIELDS} }
+    priceRange { minVariantPrice { amount currencyCode } }
+    firstVariants: variants(first: 10) {
+      nodes { ...VariantFields }
+    }
+  }
+`;
+
+const VARIANT_FRAGMENT = `
+  fragment VariantFields on ProductVariant {
+    id
+    title
+    availableForSale
+    price { amount currencyCode }
+    selectedOptions { name value }
+    image { ${IMAGE_FIELDS} }
+  }
+`;
+
+const mapImage = (image: any, fallbackAlt: string): ProductImage | null =>
+  image?.url
+    ? {
+        url: image.url,
+        altText: image.altText || fallbackAlt,
+        width: image.width ?? undefined,
+        height: image.height ?? undefined,
+      }
+    : null;
+
+const mapVariant = (node: any, productTitle: string): ProductVariant => ({
+  id: node.id,
+  title: node.title,
+  availableForSale: Boolean(node.availableForSale),
+  price: {
+    amount: Number(node.price.amount),
+    currencyCode: node.price.currencyCode,
+  },
+  selectedOptions: Object.fromEntries(
+    (node.selectedOptions ?? []).map((o: any) => [o.name, o.value])
+  ),
+  image: mapImage(node.image, productTitle),
+});
+
+const mapProductSummary = (node: any): ProductSummary => {
+  const variants: ProductVariant[] = (node.firstVariants?.nodes ?? []).map(
+    (v: any) => mapVariant(v, node.title)
+  );
+  const minPrice = node.priceRange?.minVariantPrice;
   return {
     id: node.id,
     productId: convertId(node.id),
+    handle: node.handle,
     title: node.title,
-    description: node.description || "",
-    amount: node.variants.edges[0]?.node.price.amount,
-    featuredImage: resizedImageUrl,
-    ...defaultProductValues,
+    price: {
+      amount: Number(minPrice?.amount ?? variants[0]?.price.amount ?? 0),
+      currencyCode: minPrice?.currencyCode ?? "CAD",
+    },
+    image: mapImage(node.featuredImage, node.title),
+    defaultVariant: variants.find((v) => v.availableForSale) ?? null,
   };
 };
-// Récupération de la liste des produits
-export const getProducts = async (): Promise<Product[]> => {
-  const query = `
-    {
-      products(first: 6) {
-        edges {
-          node {
-            id
-            title
-            description
-            variants(first: 1) {
-              edges {
-                node {
-                  price {
-                    amount
-                  }
-                }
-              }
-            }
-            featuredImage: images(first: 1) {
-              edges {
-                node {
-                  url
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  `;
-  const response = await fetchGraphQL(query);
-  const products = await Promise.all(
-    response.data.products.edges.map((edge: any) => mapProduct(edge.node))
-  );
-  return products;
-};
 
-// Récupération d'un produit par son ID
-export const getProduct = async (id: string): Promise<Product> => {
-  const query = `
-    {
-      product(id: "${id}") {
-        id
-        title
-        description
-        variants(first: 1) {
-          edges {
-            node {
-              price {
-                amount
-              }
-            }
-          }
-        }
-        featuredImage: images(first: 1) {
-          edges {
-            node {
-              url
-            }
-          }
-        }
-      }
-    }
-  `;
-  const response = await fetchGraphQL(query);
-  return await mapProduct(response.data.product);
-};
-
-export const getRecommendations = async (id: string): Promise<Product[]> => {
-  const query = `
-    {
-      productRecommendations(productId: "${id}") {
-        id
-        title
-        description
-        featuredImage {
-          url
-        }
-        variants(first: 1) {
-          edges {
-            node {
-              price {
-                amount
-              }
-            }
-          }
-        }
-      }
+// Liste paginée des produits (optionnellement filtrée par collection)
+export async function getProducts(
+  {
+    collection,
+    cursor,
+  }: { collection?: string | null; cursor?: string | null } = {},
+  signal?: AbortSignal
+): Promise<ProductPage> {
+  const productsField = `
+    products(first: $first, after: $after) {
+      pageInfo { hasNextPage endCursor }
+      nodes { ...ProductCard }
     }
   `;
 
-  const response = await fetchGraphQL(query);
-  const products: Promise<Product>[] = response.data.productRecommendations.map(
-    async (recommendation: any) => {
-      const adaptedRecommendation = {
-        ...recommendation,
-        featuredImage: {
-          edges: recommendation.featuredImage?.url
-            ? [{ node: { url: recommendation.featuredImage.url } }]
-            : [],
-        },
-      };
+  const query = collection
+    ? `query CollectionProducts($handle: String!, $first: Int!, $after: String) {
+        collection(handle: $handle) { ${productsField} }
+      }`
+    : `query Products($first: Int!, $after: String) { ${productsField} }`;
 
-      return mapProduct(adaptedRecommendation);
-    }
+  const data = await fetchGraphQL<any>(
+    `${query} ${PRODUCT_CARD_FRAGMENT} ${VARIANT_FRAGMENT}`,
+    { handle: collection, first: PAGE_SIZE, after: cursor ?? null },
+    signal
   );
 
-  return Promise.all(products);
-};
+  const connection = collection ? data.collection?.products : data.products;
+  if (!connection) {
+    return { products: [], hasNextPage: false, endCursor: null };
+  }
+
+  return {
+    products: connection.nodes.map(mapProductSummary),
+    hasNextPage: connection.pageInfo.hasNextPage,
+    endCursor: connection.pageInfo.endCursor,
+  };
+}
+
+// Collections + nombre de produits de chacune (pour les filtres)
+export async function getCollections(signal?: AbortSignal): Promise<{
+  total: number;
+  collections: Collection[];
+}> {
+  const data = await fetchGraphQL<any>(
+    `query Collections {
+      products(first: 250) { nodes { id } }
+      collections(first: 50) {
+        nodes { handle title products(first: 250) { nodes { id } } }
+      }
+    }`,
+    {},
+    signal
+  );
+
+  return {
+    total: data.products.nodes.length,
+    collections: data.collections.nodes.map((c: any) => ({
+      handle: c.handle,
+      title: c.title,
+      count: c.products.nodes.length,
+    })),
+  };
+}
+
+// Récupération d'un produit complet par son ID
+export async function getProduct(
+  id: string,
+  signal?: AbortSignal
+): Promise<Product | null> {
+  const data = await fetchGraphQL<any>(
+    `query Product($id: ID!) {
+      product(id: $id) {
+        ...ProductCard
+        description
+        images(first: 10) { nodes { ${IMAGE_FIELDS} } }
+        options { name values }
+        variants(first: 100) { nodes { ...VariantFields } }
+      }
+    }
+    ${PRODUCT_CARD_FRAGMENT} ${VARIANT_FRAGMENT}`,
+    { id },
+    signal
+  );
+
+  const node = data.product;
+  if (!node) return null;
+
+  const summary = mapProductSummary(node);
+  const variants: ProductVariant[] = node.variants.nodes.map((v: any) =>
+    mapVariant(v, node.title)
+  );
+  const images = (node.images?.nodes ?? [])
+    .map((img: any) => mapImage(img, node.title))
+    .filter(Boolean) as ProductImage[];
+
+  return {
+    ...summary,
+    description: node.description || "",
+    images: images.length ? images : summary.image ? [summary.image] : [],
+    options: (node.options ?? []).filter(
+      (o: any) => !(o.name === "Title" && o.values?.[0] === "Default Title")
+    ),
+    variants,
+    defaultVariant:
+      variants.find((v) => v.availableForSale) ?? variants[0] ?? null,
+  };
+}
+
+// Produits recommandés pour un produit donné
+export async function getRecommendations(
+  id: string,
+  signal?: AbortSignal
+): Promise<ProductSummary[]> {
+  const data = await fetchGraphQL<any>(
+    `query Recommendations($id: ID!) {
+      productRecommendations(productId: $id) { ...ProductCard }
+    }
+    ${PRODUCT_CARD_FRAGMENT} ${VARIANT_FRAGMENT}`,
+    { id },
+    signal
+  );
+
+  return (data.productRecommendations ?? [])
+    .filter((p: any) => p.id !== id)
+    .map(mapProductSummary);
+}

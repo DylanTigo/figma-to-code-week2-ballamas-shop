@@ -8,38 +8,34 @@ import ProductDetails from "./pages/ProductDetails.tsx";
 import Cart from "./pages/Cart.tsx";
 import Checkout from "./pages/Checkout.tsx";
 import Payement from "./pages/Payement.tsx";
+import NotFound from "./pages/NotFound.tsx";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // Le catalogue change rarement : on garde les données 5 min en cache
+      staleTime: 1000 * 60 * 5,
+      refetchOnWindowFocus: false,
+      retry: 2,
+    },
+  },
+});
 
 const router = createBrowserRouter([
   {
     path: "/",
     element: <App />,
     children: [
-      {
-        path: "/",
-        element: <Home />,
-      },
-      {
-        path: "/product/:productId",
-        element: <ProductDetails />,
-      },
-      {
-        path: "/cart",
-        element: <Cart />,
-      },
-      {
-        path: "/checkout",
-        element: <Checkout />,
-      },
-      {
-        path: "/payment",
-        element: <Payement />,
-      },
+      { index: true, element: <Home /> },
+      { path: "product/:productId", element: <ProductDetails /> },
+      { path: "cart", element: <Cart /> },
+      { path: "checkout", element: <Checkout /> },
+      { path: "payment", element: <Payement /> },
+      { path: "*", element: <NotFound /> },
     ],
   },
-])
+]);
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

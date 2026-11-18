@@ -1,11 +1,21 @@
-import { cva } from "class-variance-authority"
+import { cva } from "class-variance-authority";
 
-type SizeButtonProps = React.HTMLAttributes<HTMLButtonElement> & {
-    variant?: 'normal' | 'active'
-}
+type SizeButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
+  variant?: "normal" | "active";
+};
 
-export default function SizeButton( { variant, className, ...props }: SizeButtonProps ) {
-  return <button {...props} type="button" className={sizeButtonVariants({ variant }) + " " + className} />
+export default function SizeButton({
+  variant,
+  className = "",
+  ...props
+}: SizeButtonProps) {
+  return (
+    <button
+      {...props}
+      type="button"
+      className={sizeButtonVariants({ variant }) + " " + className}
+    />
+  );
 }
 
 const sizeButtonVariants = cva(
@@ -13,12 +23,12 @@ const sizeButtonVariants = cva(
   {
     variants: {
       variant: {
-        normal: 'bg-none text-black hover:bg-white/80',
-        active: 'bg-black text-white hover:bg-black/80',
+        normal: "bg-none text-black hover:bg-black/5",
+        active: "bg-black text-white hover:bg-black/80",
       },
     },
-     defaultVariants: {
-      variant: 'normal',
+    defaultVariants: {
+      variant: "normal",
     },
   }
-)
+);
