@@ -18,7 +18,7 @@ type ProductImgProps = {
  * - srcset responsive via le CDN Shopify (on ne charge que la taille utile)
  * - lazy-loading natif + décodage asynchrone
  * - width/height pour éviter les décalages de mise en page
- * - fondu à l'apparition sur un fond gris de placeholder
+ * - placeholder gris animé (skeleton) pendant le chargement
  */
 export default function ProductImg({
   image,
@@ -47,9 +47,8 @@ export default function ProductImg({
       // @ts-expect-error: attribut HTML valide, pas encore typé dans React 18
       fetchpriority={priority ? "high" : "auto"}
       onLoad={() => setLoaded(true)}
-      className={`bg-gray-light transition-opacity duration-500 ${
-        loaded ? "opacity-100" : "opacity-0"
-      } ${className}`}
+      // Tant que l'image charge, son fond gris pulse comme un skeleton
+      className={`bg-gray-light ${loaded ? "" : "animate-pulse"} ${className}`}
     />
   );
 }

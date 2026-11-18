@@ -8,7 +8,6 @@ import {
   toProductGid,
 } from "../services/api/datas";
 import { useQuery } from "@tanstack/react-query";
-import Loader from "../components/Loader";
 import { useCartStore } from "../services/stores/store";
 import { useEffect, useMemo, useState } from "react";
 import { Product, ProductImage, ProductVariant } from "../types/productTypes";
@@ -33,6 +32,10 @@ const SWATCHES: Record<string, string> = {
 
 const SIZE_LABELS: Record<string, string> = {
   "extra small": "XS",
+  "x-small": "XS",
+  "x-large": "XL",
+  "xx-large": "XXL",
+  "extra extra large": "XXL",
   small: "S",
   medium: "M",
   large: "L",
@@ -83,7 +86,7 @@ export default function ProductDetails() {
   return (
     <div className="mt-[76px] mb-24">
       {isPending ? (
-        <Loader />
+        <ProductSkeleton />
       ) : isError ? (
         <ErrorMessage
           message="We couldn't load this product."
@@ -121,6 +124,55 @@ export default function ProductDetails() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+const PRODUCT_LAYOUT =
+  "flex w-full max-lg:flex-col justify-between gap-8 sm:gap-11";
+const PRODUCT_MEDIA_COL = "w-full lg:flex-1 min-w-0 space-y-3";
+const PRODUCT_INFO_COL = "flex w-full lg:flex-1 min-w-0 flex-col gap-7";
+
+function ProductSkeleton() {
+  const bar = "rounded-full bg-gray-light";
+  return (
+    <div className={`${PRODUCT_LAYOUT} animate-pulse`} aria-busy="true" aria-label="Loading product">
+      <div className={PRODUCT_MEDIA_COL}>
+        <div className="w-full h-[600px] max-sm:h-[420px] rounded-4xl bg-gray-light" />
+        <div className="flex gap-2.5">
+          {Array.from({ length: 5 }, (_, i) => (
+            <div key={i} className="size-16 sm:size-20 rounded-2xl bg-gray-light" />
+          ))}
+        </div>
+      </div>
+      <div className={PRODUCT_INFO_COL}>
+        <div className="space-y-5.5">
+          <div className={`${bar} h-10 sm:h-12 w-3/4`} />
+          <div className={`${bar} h-8 sm:h-10 w-1/3`} />
+          <div className={`${bar} h-7 w-20`} />
+          <div className="flex gap-3">
+            {Array.from({ length: 4 }, (_, i) => (
+              <div key={i} className={`${bar} h-11 sm:h-14 w-[55px] sm:w-[76px]`} />
+            ))}
+          </div>
+          <div className={`${bar} h-7 w-32`} />
+          <div className="flex gap-3">
+            {Array.from({ length: 5 }, (_, i) => (
+              <div key={i} className="size-5 sm:size-7 rounded-full bg-gray-light" />
+            ))}
+          </div>
+          <div className="flex gap-3.5">
+            <div className={`${bar} h-12 sm:h-16 w-full`} />
+            <div className={`${bar} h-12 sm:h-16 w-full`} />
+          </div>
+        </div>
+        <div className="space-y-3">
+          <div className={`${bar} h-8 w-40`} />
+          {["w-full", "w-full", "w-5/6", "w-2/3"].map((w, i) => (
+            <div key={i} className={`${bar} h-4 ${w}`} />
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
@@ -184,8 +236,8 @@ function ProductView({ product }: { product: Product }) {
   );
 
   return (
-    <div className="flex w-full max-lg:flex-col justify-between gap-8 sm:gap-11">
-      <div className="w-full space-y-3">
+    <div className={PRODUCT_LAYOUT}>
+      <div className={PRODUCT_MEDIA_COL}>
         <div className="w-full h-[600px] max-sm:h-[420px] rounded-4xl overflow-hidden bg-gray-light">
           <ProductImg
             key={activeImage?.url}
@@ -198,7 +250,7 @@ function ProductView({ product }: { product: Product }) {
           />
         </div>
         {gallery.length > 1 && (
-          <div className="flex gap-2.5 overflow-x-auto no-scrollbar">
+          <div className="flex flex-wrap gap-2.5 p-1 -m-1">
             {gallery.map((img, index) => (
               <button
                 key={img.url}
@@ -206,10 +258,10 @@ function ProductView({ product }: { product: Product }) {
                 onClick={() => setActiveImage(img)}
                 aria-label={`Show image ${index + 1}`}
                 aria-current={img.url === activeImage?.url}
-                className={`size-20 shrink-0 rounded-2xl overflow-hidden outline-offset-2 transition-opacity ${
+                className={`size-16 sm:size-20 shrink-0 rounded-2xl overflow-hidden ring-offset-2 transition ${
                   img.url === activeImage?.url
-                    ? "outline outline-2 outline-black"
-                    : "opacity-70 hover:opacity-100"
+                    ? "ring-2 ring-black"
+                    : "opacity-60 hover:opacity-100"
                 }`}
               >
                 <ProductImg
@@ -224,7 +276,7 @@ function ProductView({ product }: { product: Product }) {
           </div>
         )}
       </div>
-      <div className="flex w-full flex-col gap-7">
+      <div className={PRODUCT_INFO_COL}>
         <div className="space-y-5.5">
           <div className="flex flex-col gap-2.5 sm:gap-4.5">
             <h2 className="text-3xl sm:text-[42px] sm:leading-tight font-semibold font-chillax">
@@ -293,7 +345,7 @@ function ProductView({ product }: { product: Product }) {
               )
             )}
           </div>
-          <div className="flex gap-3.5">
+          <div className="flex max-sm:flex-col gap-3.5">
             <Button
               big
               disabled={!canBuy}

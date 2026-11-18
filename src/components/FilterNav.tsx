@@ -10,7 +10,7 @@ type FilterNavProps = {
 };
 
 export default function FilterNav({ active, onChange }: FilterNavProps) {
-  const { data } = useQuery({
+  const { data, isPending } = useQuery({
     queryKey: ["collections"],
     queryFn: ({ signal }) => getCollections(signal),
     staleTime: 1000 * 60 * 30,
@@ -50,8 +50,15 @@ export default function FilterNav({ active, onChange }: FilterNavProps) {
           }`}
         >
           {button.label}
-          {button.count !== undefined && (
+          {button.count !== undefined ? (
             <span className="text-base">{button.count}</span>
+          ) : (
+            isPending && (
+              <span
+                aria-hidden="true"
+                className="inline-block h-4 w-5 rounded-full bg-current opacity-20 animate-pulse"
+              />
+            )
           )}
         </button>
       ))}
